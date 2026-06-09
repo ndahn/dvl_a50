@@ -85,30 +85,33 @@ DvlA50::Message DvlA50::receive()
 {
     // Single threaded access only
     std::lock_guard<std::mutex> lock(mtx);
-
-    char *tempBuffer = new char[1];
-    std::string str; 
     
     if(fault != 0)
     {
         return {"fault", std::to_string(fault)};
     }
     
-    while(tempBuffer[0] != '\n')
+    std::string str; 
+    char c = 0;
+    
+    while (c != '\n')
     {
-        if(tcp_socket->Receive(tempBuffer) != 0)
-        {
-            str = str + tempBuffer[0];
+        // Receive 1 byte and check
+        int n = tcp_socket-> Receive(&c);
+        if (n > 0) {
+            str += c;
+        }
+        else {
+            // 0: socket closed, -1: timeout
+            break;
         }
     }
-
-    delete tempBuffer;
-
+    
     try
     {
         return json::parse(str);
     }
-    catch(std::exception& e)
+    catch(const std::exception& e)
     {
         return {"error", std::string(e.what())};
     }
@@ -151,6 +154,7 @@ void DvlA50::configure(
     message["parameters"]["dark_mode_enabled"] = led_enabled;
     message["parameters"]["mounting_rotation_offset"] = mounting_rotation_offset;
     message["parameters"]["range_mode"] = range_mode;
+    //message["parameters"]["periodic_cycling_enabled"] = true;
 
     send(message);
 }
@@ -185,7 +189,8 @@ void DvlA50::send_command(std::string cmd)
 {
     std::cout << "send command '" << cmd << "'" << std::endl;
 
-    json json_data = {"command", cmd};
+    json json_data;
+    json_data["command"] = cmd;
     send(json_data);
 }
 

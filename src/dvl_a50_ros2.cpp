@@ -193,6 +193,9 @@ public:
     {
         DvlA50::Message res = dvl.receive();
 
+        //RCLCPP_INFO(get_logger(), "### %s", res.dump().c_str());
+        //return;
+
         if (res.contains("response_to"))
         {
             // Command response
@@ -247,13 +250,14 @@ public:
             velocity_report.beam_velocities_valid = res["velocity_valid"];
 
             // Beam specific data
-            for (size_t beam = 0; beam < 4; beam++)
+            size_t num_beams = std::min<size_t>(res["transducers"].size(), 4);
+            for (size_t beam = 0; beam < num_beams; beam++)
             {
                 velocity_report.num_good_beams += bool(res["transducers"][beam]["beam_valid"]);
-                velocity_report.range = res["transducers"][beam]["distance"];
+                velocity_report.range[beam] = res["transducers"][beam]["distance"];
                 //velocity_report.range_covar
-                velocity_report.beam_quality = res["transducers"][beam]["rssi"];
-                velocity_report.beam_velocity = res["transducers"][beam]["velocity"];
+                velocity_report.beam_quality[beam] = res["transducers"][beam]["rssi"];
+                velocity_report.beam_velocity[beam] = res["transducers"][beam]["velocity"];
                 //velocity_report.beam_velocity_covar
             }
 
