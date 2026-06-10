@@ -248,9 +248,11 @@ public:
 
             velocity_report.beam_ranges_valid = true;
             velocity_report.beam_velocities_valid = res["velocity_valid"];
-
+            
             // Beam specific data
-            size_t num_beams = std::min<size_t>(res["transducers"].size(), 4);
+            velocity_report.num_good_beams = 0;
+            size_t num_beams = std::max<size_t>(res["transducers"].size(), 4);
+
             for (size_t beam = 0; beam < num_beams; beam++)
             {
                 velocity_report.num_good_beams += bool(res["transducers"][beam]["beam_valid"]);

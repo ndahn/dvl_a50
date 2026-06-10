@@ -86,16 +86,14 @@ DvlA50::Message DvlA50::receive()
     // Single threaded access only
     std::lock_guard<std::mutex> lock(mtx);
     
-    if(fault != 0)
-    {
+    if(fault != 0) {
         return {"fault", std::to_string(fault)};
     }
     
     std::string str; 
     char c = 0;
     
-    while (c != '\n')
-    {
+    while (c != '\n') {
         // Receive 1 byte and check
         int n = tcp_socket-> Receive(&c);
         if (n > 0) {
@@ -106,13 +104,15 @@ DvlA50::Message DvlA50::receive()
             break;
         }
     }
+
+    if (str.size() <= 1) {
+        return {"error", "no data received"};
+    }
     
-    try
-    {
+    try {
         return json::parse(str);
     }
-    catch(const std::exception& e)
-    {
+    catch(const std::exception& e) {
         return {"error", std::string(e.what())};
     }
 }
